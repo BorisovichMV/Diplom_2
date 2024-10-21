@@ -52,7 +52,7 @@ public class CreateUserTest {
         checkUserAttributes(jsonPath);
         this.createdUsers.add(user);
 
-        Response yetAnotherResponse = createUser(true, false, false, false);
+        Response yetAnotherResponse = createUser(true, false, false, false, 403);
         JsonPath yetAnotherJsonPath = yetAnotherResponse.jsonPath();
         boolean isSuccessful = yetAnotherJsonPath.getBoolean("success");
         Assert.assertFalse(isSuccessful);
@@ -70,19 +70,19 @@ public class CreateUserTest {
 
     @Step("Проверка создания пользователя с пустым именем")
     private void checkEmptyName() {
-        Response response = createUser(false, true, false, false);
+        Response response = createUser(false, true, false, false, 403);
         checkForbiddenResponseBody(response);
     }
 
     @Step("Проверка создания пользователя с пустым email")
     private void checkEmptyEmail() {
-        Response response = createUser(false, false, true, false);
+        Response response = createUser(false, false, true, false, 403);
         checkForbiddenResponseBody(response);
     }
 
     @Step("Проверка создания пользователя с пустым паролем")
     private void checkEmptyPassword() {
-        Response response = createUser(false, false, false, true);
+        Response response = createUser(false, false, false, true, 403);
         checkForbiddenResponseBody(response);
     }
 
@@ -114,13 +114,13 @@ public class CreateUserTest {
 
     @Step("Отправляем запрос на создание пользователя")
     private Response createUser() {
-        return sendRequest("POST", UserRegistrationModel.fromUser(user), "/auth/register", 200);
+        return createUser(false, false, false, false, 200);
     }
 
-    @Step("Отправляем невалидный запрос на создание пользователя")
-    private Response createUser(Boolean userExisting, Boolean emptyName, Boolean emptyEmail, Boolean emptyPassword) {
+    @Step("Отправляем запрос на создание пользователя")
+    private Response createUser(Boolean userExisting, Boolean emptyName, Boolean emptyEmail, Boolean emptyPassword, Integer statusCode) {
         if (userExisting) {
-            return sendRequest("POST", UserRegistrationModel.fromUser(user), "/auth/register", 403);
+            return sendRequest("POST", UserRegistrationModel.fromUser(user), "/auth/register", statusCode);
         }
         UserRegistrationModel model = UserRegistrationModel.fromUser(user);
         if (emptyName) {
@@ -132,7 +132,7 @@ public class CreateUserTest {
         if (emptyPassword) {
             model.erasePassword();
         }
-        return sendRequest("POST", model, "/auth/register", 403);
+        return sendRequest("POST", model, "/auth/register", statusCode);
     }
 
     @Step("Отправляем запрос")
@@ -151,6 +151,11 @@ public class CreateUserTest {
 
     @Step("Отправляем запрос с авторизацией")
     private Response sendAuthorizedRequest(String method, Object obj, String uri, Integer statusCode) {
+        return sendAuthorizedRequest(this.user, method, obj, uri, statusCode);
+    }
+
+    @Step("Отправляем запрос с авторизацией")
+    private Response sendAuthorizedRequest(User user, String method, Object obj, String uri, Integer statusCode) {
         if (method.equals("DELETE")) {
             return RestAssured.given()
                     .header("Authorization", user.getAccessToken())
@@ -176,7 +181,7 @@ public class CreateUserTest {
 
     @Step("Удаляем пользователя")
     private void deleteUser(User user) {
-        sendAuthorizedRequest("DELETE", user, "/auth/user", 202);
+        sendAuthorizedRequest(user, "DELETE", user, "/auth/user", 202);
     }
 
 }

@@ -1,7 +1,7 @@
 public class User {
-    private final String name;
-    private final String password;
-    private final String email;
+    private String name;
+    private String password;
+    private String email;
     private String accessToken;
     private String refreshToken;
 
@@ -37,5 +37,17 @@ public class User {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

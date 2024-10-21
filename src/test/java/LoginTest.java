@@ -51,13 +51,13 @@ public class LoginTest {
 
     @Step("Проверяем невозможность входа с неправильным email")
     private void checkForgotPassword() {
-        Response response = loginUser(true, false);
+        Response response = loginUser(true, false, 401);
         checkUnauthorizedResponseBody(response);
     }
 
     @Step("Проверяем невозможность входа с неправильным паролем")
     private void checkForgotEmail() {
-        Response response = loginUser(false, true);
+        Response response = loginUser(false, true, 401);
         checkUnauthorizedResponseBody(response);
     }
 
@@ -98,11 +98,11 @@ public class LoginTest {
 
     @Step("Отправляем запрос на вход пользователя")
     private Response loginUser() {
-        return sendRequest("POST", UserLoginModel.fromUser(user), "/auth/login", 200);
+        return loginUser(false, false, 200);
     }
 
-    @Step("Отправляем невалидный запрос на вход пользователя")
-    private Response loginUser(Boolean isForgotPassword, Boolean isForgotEmail) {
+    @Step("Отправляем запрос на вход пользователя")
+    private Response loginUser(Boolean isForgotPassword, Boolean isForgotEmail, Integer statusCode) {
         UserLoginModel model = UserLoginModel.fromUser(user);
         if (isForgotPassword) {
             model.forgotPassword();
@@ -110,7 +110,7 @@ public class LoginTest {
         if (isForgotEmail) {
             model.forgotEmail();
         }
-        return sendRequest("POST", model, "/auth/login", 401);
+        return sendRequest("POST", model, "/auth/login", statusCode);
     }
 
     @Step("Отправляем запрос на создание пользователя")
@@ -134,6 +134,11 @@ public class LoginTest {
 
     @Step("Отправляем запрос с авторизацией")
     private Response sendAuthorizedRequest(String method, Object obj, String uri, Integer statusCode) {
+        return sendAuthorizedRequest(this.user, method, obj, uri, statusCode);
+    }
+
+    @Step("Отправляем запрос с авторизацией")
+    private Response sendAuthorizedRequest(User user, String method, Object obj, String uri, Integer statusCode) {
         if (method.equals("DELETE")) {
             return RestAssured.given()
                     .header("Authorization", user.getAccessToken())
@@ -159,7 +164,7 @@ public class LoginTest {
 
     @Step("Удаляем пользователя")
     private void deleteUser(User user) {
-        sendAuthorizedRequest("DELETE", user, "/auth/user", 202);
+        sendAuthorizedRequest(user, "DELETE", user, "/auth/user", 202);
     }
 
 }
