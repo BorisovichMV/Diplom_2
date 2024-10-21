@@ -1,7 +1,7 @@
 public class UserRegistrationModel {
-    private final String name;
-    private final String password;
-    private final String email;
+    private String name;
+    private String password;
+    private String email;
 
     public UserRegistrationModel(String username, String password, String email) {
         this.name = username;
@@ -23,5 +23,17 @@ public class UserRegistrationModel {
 
     public String getEmail() {
         return email;
+    }
+
+    public void eraseName() {
+        this.name = null;
+    }
+
+    public void erasePassword() {
+        this.password = null;
+    }
+
+    public void eraseEmail() {
+        this.email = null;
     }
 }
