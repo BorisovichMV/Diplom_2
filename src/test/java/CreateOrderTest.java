@@ -115,7 +115,7 @@ public class CreateOrderTest {
         Assert.assertTrue(order.get("status") instanceof String);
 
         Assert.assertTrue(order.containsKey("ingredients"));
-        List<Ingredient> orderIngredients = objectMapper.convertValue(order.get("ingredients"), new TypeReference<List<Ingredient>>() { });
+        List<Ingredient> orderIngredients = objectMapper.convertValue(order.get("ingredients"), new TypeReference<>() { });
         Assert.assertEquals(this.ingredients.size(), orderIngredients.size());
         Assert.assertTrue(orderIngredients.containsAll(this.ingredients));
         Assert.assertEquals(this.ingredients, orderIngredients);
@@ -180,8 +180,6 @@ public class CreateOrderTest {
     private Response sendRequest(String method, Object obj, String uri, Integer statusCode) {
         if (method.equals("DELETE") || method.equals("GET")) {
             return RestAssured.given()
-                    .header("Authorization", user.getAccessToken())
-                    .when()
                     .request(method, uri)
                     .then()
                     .log().body()
