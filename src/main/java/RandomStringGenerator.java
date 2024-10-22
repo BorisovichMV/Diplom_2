@@ -26,4 +26,8 @@ public class RandomStringGenerator {
     public static String generateUsername() {
         return generateRandomString(7, ALPHABET);
     }
+
+    public static String generateWrongHash(Integer hashLength) {
+        return generateRandomString(hashLength, ALPHABET + DIGITS).toLowerCase();
+    }
 }

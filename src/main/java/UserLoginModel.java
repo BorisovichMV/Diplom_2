@@ -20,18 +20,18 @@ public class UserLoginModel {
     }
 
     public void forgotPassword() {
-        String newPassword = RandomStringGenerator.generatePassword();
-        while (newPassword.equals(password)) {
+        String newPassword;
+        do {
             newPassword = RandomStringGenerator.generatePassword();
-        }
+        } while (newPassword.equals(password));
         this.password = newPassword;
     }
 
     public void forgotEmail() {
-        String newEmail = RandomStringGenerator.generateEmail();
-        while (newEmail.equals(email)) {
+        String newEmail;
+        do {
             newEmail = RandomStringGenerator.generateEmail();
-        }
+        } while (newEmail.equals(email));
         this.email = newEmail;
     }
 }

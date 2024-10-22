@@ -129,7 +129,7 @@ public class ChangeUserDataTest {
         rememberTokens(this.user, jsonPath);
     }
 
-    @Step("Запоминаем токены дополнительного")
+    @Step("Запоминаем токены")
     private void rememberTokens(User user, JsonPath jsonPath) {
         boolean isSuccessful = jsonPath.getBoolean("success");
         Assert.assertTrue(isSuccessful);
@@ -144,7 +144,7 @@ public class ChangeUserDataTest {
         return createUser(this.user);
     }
 
-    @Step("Отправляем запрос на создание дополнительного пользователя")
+    @Step("Отправляем запрос на создание пользователя")
     private Response createUser(User user) {
         return sendRequest("POST", UserRegistrationModel.fromUser(user), "/auth/register", 200);
     }
