@@ -1,4 +1,8 @@
-import java.util.ArrayList;
+package models;
+
+import entities.Ingredient;
+import entities.Order;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;

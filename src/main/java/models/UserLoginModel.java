@@ -1,3 +1,8 @@
+package models;
+
+import entities.User;
+import helpers.RandomStringGenerator;
+
 public class UserLoginModel {
     private String password;
     private String email;

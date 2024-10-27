@@ -1,3 +1,9 @@
+package models;
+
+import entities.Ingredient;
+import entities.Order;
+import helpers.RandomStringGenerator;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

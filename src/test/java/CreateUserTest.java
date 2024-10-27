@@ -1,58 +1,39 @@
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-public class CreateUserTest {
+import static steps.UserSteps.createUser;
+import static steps.UserSteps.rememberTokens;
 
-    private User user;
-    private final List<User> createdUsers = new ArrayList<>();
-
-    @BeforeClass
-    public static void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/api";
-    }
-
-    @Before
-    public void setup() {
-        String email = RandomStringGenerator.generateEmail();
-        String password = RandomStringGenerator.generatePassword();
-        String username = RandomStringGenerator.generateUsername();
-        this.user = new User(email, password, username);
-    }
-
-    @After
-    public void tearDown() {
-        this.createdUsers.forEach(this::deleteUser);
-    }
+public class CreateUserTest extends BaseTest {
 
     @Test
     @DisplayName("Тест на создание уникального пользователя")
     public void testCreateUser() {
-        Response response = createUser();
+        Response response = createUser(this.user);
         JsonPath jsonPath = response.jsonPath();
-        rememberTokens(jsonPath);
-        checkUserAttributes(jsonPath);
-
+        rememberTokens(this.user, jsonPath);
         this.createdUsers.add(user);
+        Map<String, String> returnedUser = jsonPath.getMap("user");
+
+        Assert.assertEquals(user.getEmail().toLowerCase(), returnedUser.get("email"));
+        Assert.assertEquals(user.getName(), returnedUser.get("name"));
     }
 
     @Test
     @DisplayName("Тест на создание уже зарегистрированного пользователя")
     public void testCreateUserAlreadyRegistered() {
-        Response response = createUser();
+        Response response = createUser(this.user);
         JsonPath jsonPath = response.jsonPath();
-        rememberTokens(jsonPath);
-        checkUserAttributes(jsonPath);
+        rememberTokens(this.user, jsonPath);
         this.createdUsers.add(user);
 
-        Response yetAnotherResponse = createUser(true, false, false, false, 403);
+        Response yetAnotherResponse = createUser(this.user,true, false, false, false, 403);
         JsonPath yetAnotherJsonPath = yetAnotherResponse.jsonPath();
         boolean isSuccessful = yetAnotherJsonPath.getBoolean("success");
         Assert.assertFalse(isSuccessful);
@@ -61,28 +42,23 @@ public class CreateUserTest {
     }
 
     @Test
-    @DisplayName("Тест на создание пользователя с пустыми обязательными полями")
-    public void testCreateUserEmptyFields() {
-        checkEmptyName();
-        checkEmptyEmail();
-        checkEmptyPassword();
-    }
-
-    @Step("Проверка создания пользователя с пустым именем")
-    private void checkEmptyName() {
-        Response response = createUser(false, true, false, false, 403);
+    @DisplayName("Тест невозможности создания пользователя с пустым именем")
+    public void checkEmptyName() {
+        Response response = createUser(this.user, false, true, false, false, 403);
         checkForbiddenResponseBody(response);
     }
 
-    @Step("Проверка создания пользователя с пустым email")
-    private void checkEmptyEmail() {
-        Response response = createUser(false, false, true, false, 403);
+    @Test
+    @DisplayName("Тест невозможности создания пользователя с пустым email")
+    public void checkEmptyEmail() {
+        Response response = createUser(this.user, false, false, true, false, 403);
         checkForbiddenResponseBody(response);
     }
 
-    @Step("Проверка создания пользователя с пустым паролем")
-    private void checkEmptyPassword() {
-        Response response = createUser(false, false, false, true, 403);
+    @Test
+    @DisplayName("Тест невозможности создания пользователя с пустым паролем")
+    public void checkEmptyPassword() {
+        Response response = createUser(this.user, false, false, false, true, 403);
         checkForbiddenResponseBody(response);
     }
 
@@ -90,98 +66,9 @@ public class CreateUserTest {
     private void checkForbiddenResponseBody(Response response) {
         JsonPath jsonPath = response.jsonPath();
         boolean isSuccessful = jsonPath.getBoolean("success");
-        Assert.assertFalse(isSuccessful);
         String errorMessage = jsonPath.getString("message");
+
+        Assert.assertFalse(isSuccessful);
         Assert.assertEquals("Email, password and name are required fields", errorMessage);
     }
-
-    @Step("Проверяем, что атрибуты пользователя совпадают с атрибутами созданного пользователя")
-    private void checkUserAttributes(JsonPath jsonPath) {
-        Map<String, String> returnedUser = jsonPath.getMap("user");
-        Assert.assertEquals(user.getEmail().toLowerCase(), returnedUser.get("email"));
-        Assert.assertEquals(user.getName(), returnedUser.get("name"));
-    }
-
-    @Step("Запоминаем токены")
-    private void rememberTokens(JsonPath jsonPath) {
-        boolean isSuccessful = jsonPath.getBoolean("success");
-        Assert.assertTrue(isSuccessful);
-        String accessToken = jsonPath.getString("accessToken");
-        String refreshToken = jsonPath.getString("refreshToken");
-        this.user.setAccessToken(accessToken);
-        this.user.setRefreshToken(refreshToken);
-    }
-
-    @Step("Отправляем запрос на создание пользователя")
-    private Response createUser() {
-        return createUser(false, false, false, false, 200);
-    }
-
-    @Step("Отправляем запрос на создание пользователя")
-    private Response createUser(Boolean userExisting, Boolean emptyName, Boolean emptyEmail, Boolean emptyPassword, Integer statusCode) {
-        if (userExisting) {
-            return sendRequest("POST", UserRegistrationModel.fromUser(user), "/auth/register", statusCode);
-        }
-        UserRegistrationModel model = UserRegistrationModel.fromUser(user);
-        if (emptyName) {
-            model.eraseName();
-        }
-        if (emptyEmail) {
-            model.eraseEmail();
-        }
-        if (emptyPassword) {
-            model.erasePassword();
-        }
-        return sendRequest("POST", model, "/auth/register", statusCode);
-    }
-
-    @Step("Отправляем запрос")
-    private Response sendRequest(String method, Object obj, String uri, Integer statusCode) {
-        return RestAssured.given()
-                .header("Content-Type", "application/json")
-                .body(obj)
-                .log().body()
-                .when()
-                .request(method, uri)
-                .then()
-                .log().body()
-                .statusCode(statusCode)
-                .extract().response();
-    }
-
-    @Step("Отправляем запрос с авторизацией")
-    private Response sendAuthorizedRequest(String method, Object obj, String uri, Integer statusCode) {
-        return sendAuthorizedRequest(this.user, method, obj, uri, statusCode);
-    }
-
-    @Step("Отправляем запрос с авторизацией")
-    private Response sendAuthorizedRequest(User user, String method, Object obj, String uri, Integer statusCode) {
-        if (method.equals("DELETE")) {
-            return RestAssured.given()
-                    .header("Authorization", user.getAccessToken())
-                    .when()
-                    .request(method, uri)
-                    .then()
-                    .log().body()
-                    .statusCode(statusCode)
-                    .extract().response();
-        }
-        return RestAssured.given()
-                .header("Authorization", user.getAccessToken())
-                .header("Content-Type", "application/json")
-                .body(obj)
-                .log().body()
-                .when()
-                .request(method, uri)
-                .then()
-                .log().body()
-                .statusCode(statusCode)
-                .extract().response();
-    }
-
-    @Step("Удаляем пользователя")
-    private void deleteUser(User user) {
-        sendAuthorizedRequest(user, "DELETE", user, "/auth/user", 202);
-    }
-
 }

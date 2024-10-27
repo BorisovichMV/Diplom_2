@@ -1,3 +1,7 @@
+package models;
+
+import entities.User;
+
 public class UserRegistrationModel {
     private String name;
     private String password;
